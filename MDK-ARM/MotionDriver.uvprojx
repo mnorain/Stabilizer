@@ -133,11 +133,11 @@
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>1</Capability>
-            <DriverSelection>4107</DriverSelection>
+            <DriverSelection>4099</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>STLink\ST-LINKIII-KEIL_SWO.dll</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -334,7 +334,7 @@
               <MiscControls>--C99</MiscControls>
               <Define>USE_HAL_DRIVER,STM32F030x8</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;  ../Drivers/STM32F0xx_HAL_Driver/Inc;  ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy;  ../Drivers/CMSIS/Device/ST/STM32F0xx/Include;  ../Drivers/CMSIS/Include</IncludePath>
+              <IncludePath>../Inc;              ../Drivers/STM32F0xx_HAL_Driver/Inc;              ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy;              ../Drivers/CMSIS/Device/ST/STM32F0xx/Include;              ../Drivers/CMSIS/Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -612,6 +612,11 @@
               <FileName>interrupts.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\Src\interrupts.h</FilePath>
+            </File>
+            <File>
+              <FileName>tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Src/tim.c</FilePath>
             </File>
           </Files>
         </Group>

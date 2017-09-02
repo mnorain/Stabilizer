@@ -25,6 +25,7 @@
 "motiondriver\stm32f0xx_it.o"
 "motiondriver\inv_mpu.o"
 "motiondriver\inv_mpu_dmp_motion_driver.o"
+"motiondriver\tim.o"
 --library_type=microlib --strict --scatter "MotionDriver\MotionDriver.sct"
 --diag_suppress=L6329 --summary_stderr --info summarysizes --map --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers

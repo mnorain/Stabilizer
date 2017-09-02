@@ -26,12 +26,16 @@ motiondriver\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_i2c.h
 motiondriver\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_i2c_ex.h
 motiondriver\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr.h
 motiondriver\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h
+motiondriver\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_tim.h
+motiondriver\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_tim_ex.h
 motiondriver\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart.h
 motiondriver\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h
 motiondriver\main.o: ../Inc/i2c.h
+motiondriver\main.o: ../Inc/tim.h
 motiondriver\main.o: ../Inc/usart.h
 motiondriver\main.o: ../Inc/gpio.h
 motiondriver\main.o: ..\Src\eMPL\inv_mpu.h
 motiondriver\main.o: ..\Src\eMPL\inv_mpu_dmp_motion_driver.h
 motiondriver\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
 motiondriver\main.o: ../Src/interrupts.h
+motiondriver\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\math.h

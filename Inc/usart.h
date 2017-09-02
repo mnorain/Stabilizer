@@ -62,6 +62,11 @@ extern void _Error_Handler(char *, int);
 void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+#ifdef __GNUC__
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif /* __GNUC__ */
 
 /* USER CODE END Prototypes */
 

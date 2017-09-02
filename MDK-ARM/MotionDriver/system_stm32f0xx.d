@@ -26,5 +26,7 @@ motiondriver\system_stm32f0xx.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_h
 motiondriver\system_stm32f0xx.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_i2c_ex.h
 motiondriver\system_stm32f0xx.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr.h
 motiondriver\system_stm32f0xx.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h
+motiondriver\system_stm32f0xx.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_tim.h
+motiondriver\system_stm32f0xx.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_tim_ex.h
 motiondriver\system_stm32f0xx.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart.h
 motiondriver\system_stm32f0xx.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h

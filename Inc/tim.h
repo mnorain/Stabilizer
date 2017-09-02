@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : USART.c
+  * File Name          : TIM.h
   * Description        : This file provides code for the configuration
-  *                      of the USART instances.
+  *                      of the TIM instances.
   ******************************************************************************
   ** This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -36,105 +36,44 @@
   *
   ******************************************************************************
   */
+/* Define to prevent recursive inclusion -------------------------------------*/
+#ifndef __tim_H
+#define __tim_H
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "usart.h"
+#include "stm32f0xx_hal.h"
+#include "main.h"
 
-#include "gpio.h"
+/* USER CODE BEGIN Includes */
 
-/* USER CODE BEGIN 0 */
+/* USER CODE END Includes */
 
-/* USER CODE END 0 */
+extern TIM_HandleTypeDef htim3;
 
-UART_HandleTypeDef huart1;
+/* USER CODE BEGIN Private defines */
 
-/* USART1 init function */
+/* USER CODE END Private defines */
 
-void MX_USART1_UART_Init(void)
-{
+extern void _Error_Handler(char *, int);
 
-  huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
-  huart1.Init.WordLength = UART_WORDLENGTH_8B;
-  huart1.Init.StopBits = UART_STOPBITS_1;
-  huart1.Init.Parity = UART_PARITY_NONE;
-  huart1.Init.Mode = UART_MODE_TX_RX;
-  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart1) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
+void MX_TIM3_Init(void);
+                    
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+                
 
+/* USER CODE BEGIN Prototypes */
+void updateChannel1(int pulse);
+void updateChannel2(int pulse);
+void updateChannel3(int pulse);
+/* USER CODE END Prototypes */
+
+#ifdef __cplusplus
 }
-
-void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
-{
-
-  GPIO_InitTypeDef GPIO_InitStruct;
-  if(uartHandle->Instance==USART1)
-  {
-  /* USER CODE BEGIN USART1_MspInit 0 */
-
-  /* USER CODE END USART1_MspInit 0 */
-    /* USART1 clock enable */
-    __HAL_RCC_USART1_CLK_ENABLE();
-  
-    /**USART1 GPIO Configuration    
-    PA9     ------> USART1_TX
-    PA10     ------> USART1_RX 
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_10;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF1_USART1;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    /* USART1 interrupt Init */
-    HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(USART1_IRQn);
-  /* USER CODE BEGIN USART1_MspInit 1 */
-
-  /* USER CODE END USART1_MspInit 1 */
-  }
-}
-
-void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
-{
-
-  if(uartHandle->Instance==USART1)
-  {
-  /* USER CODE BEGIN USART1_MspDeInit 0 */
-
-  /* USER CODE END USART1_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_USART1_CLK_DISABLE();
-  
-    /**USART1 GPIO Configuration    
-    PA9     ------> USART1_TX
-    PA10     ------> USART1_RX 
-    */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9|GPIO_PIN_10);
-
-    /* USART1 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(USART1_IRQn);
-  /* USER CODE BEGIN USART1_MspDeInit 1 */
-
-  /* USER CODE END USART1_MspDeInit 1 */
-  }
-} 
-
-/* USER CODE BEGIN 1 */
-PUTCHAR_PROTOTYPE
-{
-  HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 200);
-	
-  return ch;
-}
-/* USER CODE END 1 */
+#endif
+#endif /*__ tim_H */
 
 /**
   * @}

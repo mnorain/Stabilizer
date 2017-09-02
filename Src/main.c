@@ -39,6 +39,7 @@
 #include "main.h"
 #include "stm32f0xx_hal.h"
 #include "i2c.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -47,6 +48,7 @@
 #include "inv_mpu_dmp_motion_driver.h"
 #include <string.h>
 #include "interrupts.h"
+#include <math.h>
 /* Data requested by client. */
 #define PRINT_ACCEL     (0x01)
 #define PRINT_GYRO      (0x02)
@@ -436,8 +438,8 @@ static void handle_input(void)
         dmp_set_pedometer_walk_time(0);
         break;
     case 'f':
-        /* Toggle DMP. */
         if (hal.dmp_on) {
+        /* Toggle DMP. */
             unsigned short dmp_rate;
             hal.dmp_on = 0;
             mpu_set_dmp_state(0);
@@ -502,7 +504,20 @@ static void handle_input(void)
 void gyro_data_ready_cb(void)
 {
     hal.new_gyro = 1;
+		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_12);
 }
+
+volatile static short gyro[3], accel[3], sensors;
+volatile  static short ax, ay, az;
+volatile static float quat1, quat2, quat3, quat4;
+volatile static float q1, q2, q3, q4;
+volatile static float eul1, eul2, eul3;
+volatile static float yaw, pitch, roll;
+volatile static float Fyaw, Fpitch, Froll;
+
+volatile static float debug1;
+
+#define PI (3.14159265)
 
 /* USER CODE END 0 */
 
@@ -533,11 +548,16 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   MX_I2C1_Init();
+  MX_TIM3_Init();
 
   /* USER CODE BEGIN 2 */
-		__disable_irq();
+		//__disable_irq();
+		
+		HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+		HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+		HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
 
-    int result;
+    volatile int result;
     unsigned char accel_fsr;
     unsigned short gyro_rate, gyro_fsr;
     unsigned long timestamp;
@@ -625,8 +645,11 @@ int main(void)
     mpu_set_dmp_state(1);
     hal.dmp_on = 1;
 		
+		volatile static int cntr=0;
+		
+		updateChannel1(2000);
 		//USB , i think they mean serial in my case, should be active
-		__enable_irq();
+		//__enable_irq();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -634,38 +657,41 @@ int main(void)
   while (1)
   {
 		
+		
 		        unsigned long sensor_timestamp;
-        //if (rx_new)
-				if(getReceivedData())
-            /* A byte has been received via USB. See handle_input for a list of
-             * valid commands.
-             */
-            handle_input();
-        //msp430_get_clock_ms(&timestamp);
+//        //if (rx_new)
+//				if(getReceivedData())
+//            /* A byte has been received via USB. See handle_input for a list of
+//             * valid commands.
+//             */
+//            handle_input();
+//        //msp430_get_clock_ms(&timestamp);
 				timestamp=HAL_GetTick();
 
-        if (hal.motion_int_mode) {
-            /* Enable motion interrupt. */
-			mpu_lp_motion_interrupt(500, 1, 5);
-            hal.new_gyro = 0;
-            /* Wait for the MPU interrupt. */
-            while (!hal.new_gyro);
-                //__bis_SR_register(LPM0_bits + GIE);
-            /* Restore the previous sensor configuration. */
-            mpu_lp_motion_interrupt(0, 0, 0);
-            hal.motion_int_mode = 0;
-        }
-				
-				if (!hal.sensors || !hal.new_gyro) {
-            /* Put the MSP430 to sleep until a timer interrupt or data ready
-             * interrupt is detected.
-             */
-            //__bis_SR_register(LPM0_bits + GIE);
-            continue;
-        }
-				
+//        if (hal.motion_int_mode) {
+//            /* Enable motion interrupt. */
+//			mpu_lp_motion_interrupt(500, 1, 5);
+//            hal.new_gyro = 0;
+//            /* Wait for the MPU interrupt. */
+//            while (!hal.new_gyro);
+//                //__bis_SR_register(LPM0_bits + GIE);
+//            /* Restore the previous sensor configuration. */
+//            mpu_lp_motion_interrupt(0, 0, 0);
+//            hal.motion_int_mode = 0;
+//        }
+//				
+//				if (!hal.sensors || !hal.new_gyro) {
+//            /* Put the MSP430 to sleep until a timer interrupt or data ready
+//             * interrupt is detected.
+//             */
+//            //__bis_SR_register(LPM0_bits + GIE);
+//            continue;
+//        }
+//			*\	
 				if (hal.new_gyro && hal.dmp_on) {
-            short gyro[3], accel[3], sensors;
+						
+            //volatile static short gyro[3], accel[3], sensors;
+					//volatile  static short ax, ay, az;
             unsigned char more;
             long quat[4];
             /* This function gets new data from the FIFO when the DMP is in
@@ -680,8 +706,10 @@ int main(void)
              * registered). The more parameter is non-zero if there are
              * leftover packets in the FIFO.
              */
+						HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_SET);
             dmp_read_fifo(gyro, accel, quat, &sensor_timestamp, &sensors,
                 &more);
+						HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_RESET);
             if (!more)
                 hal.new_gyro = 0;
             /* Gyro and accel data are written to the FIFO by the DMP in chip
@@ -689,34 +717,102 @@ int main(void)
              * keeps the gyro and accel outputs of dmp_read_fifo and
              * mpu_read_fifo consistent.
              */
-            if (sensors & INV_XYZ_GYRO && hal.report & PRINT_GYRO)
-                send_packet(PACKET_TYPE_GYRO, gyro);
-            if (sensors & INV_XYZ_ACCEL && hal.report & PRINT_ACCEL)
-                send_packet(PACKET_TYPE_ACCEL, accel);
-            /* Unlike gyro and accel, quaternions are written to the FIFO in
-             * the body frame, q30. The orientation is set by the scalar passed
-             * to dmp_set_orientation during initialization.
-             */
-            if (sensors & INV_WXYZ_QUAT && hal.report & PRINT_QUAT)
-                send_packet(PACKET_TYPE_QUAT, quat);
-        } else if (hal.new_gyro) {
-            short gyro[3], accel[3];
-            unsigned char sensors, more;
-            /* This function gets new data from the FIFO. The FIFO can contain
-             * gyro, accel, both, or neither. The sensors parameter tells the
-             * caller which data fields were actually populated with new data.
-             * For example, if sensors == INV_XYZ_GYRO, then the FIFO isn't
-             * being filled with accel data. The more parameter is non-zero if
-             * there are leftover packets in the FIFO.
-             */
-            mpu_read_fifo(gyro, accel, &sensor_timestamp, &sensors, &more);
-            if (!more)
-                hal.new_gyro = 0;
-            if (sensors & INV_XYZ_GYRO && hal.report & PRINT_GYRO)
-                send_packet(PACKET_TYPE_GYRO, gyro);
-            if (sensors & INV_XYZ_ACCEL && hal.report & PRINT_ACCEL)
-                send_packet(PACKET_TYPE_ACCEL, accel);
-        }			
+						ax=accel[0];
+						ay=accel[1];
+						az=accel[2];
+						
+//						quat1= (float)quat[0] / 16384.0f;
+//						quat2= (float)quat[1] / 16384.0f;
+//						quat3= (float)quat[2] / 16384.0f;
+//						quat4= (float)quat[3] / 16384.0f;
+						
+						quat1= quat[0]>>16; //((float)((unsigned long)quat[0]>>16))/ 16384.0f;
+						quat2= quat[1]>>16; //((float)((unsigned long)quat[1]>>16))/ 16384.0f;
+						quat3= quat[2]>>16; //((float)((unsigned long)quat[2]>>16))/ 16384.0f;
+						quat4= quat[3]>>16; //((float)((unsigned long)quat[3]>>16))/ 16384.0f;
+						
+						q1= quat1/ 16383.0f;
+						q2= quat2/ 16383.0f;
+						q3= quat3/ 16383.0f;
+						q4= quat4/ 16383.0f;
+
+						eul1 = atan2(2*quat2*quat3 - 2*quat1*quat4, 2*quat1*quat1 + 2*quat2*quat2 - 1);   // psi
+						eul2 = -asin(2*quat2*quat4 + 2*quat1*quat3);                              // theta
+						eul3 = atan2(2*quat3*quat4 - 2*quat1*quat2, 2*quat1*quat1 + 2*quat4*quat4 - 1);   // phi
+//						eul1=eul1*180/PI;
+//						eul2=eul2*180/PI;
+//						eul3=eul3*180/PI;
+						debug1= 2*quat2*quat4 + 2*quat1*quat3;
+//						yaw = atan2(2.0*(quat3*quat4 + quat1*quat2), quat1*quat1 - quat2*quat2 - quat3*quat3 + quat4*quat4);
+//						pitch = asin(-2.0*(quat2*quat4 - quat1*quat3));
+//						roll = atan2(2.0*(quat2*quat3 + quat1*quat4), quat1*quat1 + quat2*quat2 - quat3*quat3 - quat4*quat4);
+						
+							// roll (x-axis rotation)
+						double sinr = +2.0 * (q1 * q2 + q3 * q4);
+						double cosr = +1.0 - 2.0 * (q2 * q2 + q3 * q3);
+						roll = atan2(sinr, cosr);
+
+						// pitch (y-axis rotation)
+						double sinp = +2.0 * (q1 * q3 - q4 * q2);
+						if (fabs(sinp) >= 1)
+            pitch = copysign(PI / 2, sinp); // use 90 degrees if out of range
+							else
+						pitch = asin(sinp);
+
+						// yaw (z-axis rotation)
+						double siny = +2.0 * (q1 * q4 + q2 * q3);
+						double cosy = +1.0 - 2.0 * (q3 * q3 + q4 * q4);  
+						yaw = atan2(siny, cosy);
+						Fyaw= yaw*180/PI;
+						Fpitch= pitch*180/PI;
+						Froll= roll*180/PI;
+							
+						updateChannel1(2850-(Fyaw*25));	
+						updateChannel2(2850-(Froll*25));
+						updateChannel3(2850-(Fpitch*25));
+
+			
+						
+//            if (sensors & INV_XYZ_GYRO && hal.report & PRINT_GYRO)
+//                send_packet(PACKET_TYPE_GYRO, gyro);
+//            if (sensors & INV_XYZ_ACCEL && hal.report & PRINT_ACCEL)
+//                send_packet(PACKET_TYPE_ACCEL, accel);
+							
+//            /* Unlike gyro and accel, quaternions are written to the FIFO in
+//             * the body frame, q30. The orientation is set by the scalar passed
+//             * to dmp_set_orientation during initialization.
+//             */
+//            if (sensors & INV_WXYZ_QUAT && hal.report & PRINT_QUAT)
+//                send_packet(PACKET_TYPE_QUAT, quat);
+						
+//						if(cntr++ ==5){
+//							cntr=0;
+//							
+//							printf("x= %d y= %d z= %d \n\r", accel[0], accel[1], accel[2]);
+//							//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_RESET);
+//						}
+						
+						
+        } 
+				
+//				else if (hal.new_gyro) {
+//            short gyro[3], accel[3];
+//            unsigned char sensors, more;
+//            /* This function gets new data from the FIFO. The FIFO can contain
+//             * gyro, accel, both, or neither. The sensors parameter tells the
+//             * caller which data fields were actually populated with new data.
+//             * For example, if sensors == INV_XYZ_GYRO, then the FIFO isn't
+//             * being filled with accel data. The more parameter is non-zero if
+//             * there are leftover packets in the FIFO.
+//             */
+//            mpu_read_fifo(gyro, accel, &sensor_timestamp, &sensors, &more);
+//            if (!more)
+//                hal.new_gyro = 0;
+//            if (sensors & INV_XYZ_GYRO && hal.report & PRINT_GYRO)
+//                send_packet(PACKET_TYPE_GYRO, gyro);
+//            if (sensors & INV_XYZ_ACCEL && hal.report & PRINT_ACCEL)
+//                send_packet(PACKET_TYPE_ACCEL, accel);
+//        }			
 		
   /* USER CODE END WHILE */
 

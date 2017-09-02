@@ -53,7 +53,7 @@ void MX_I2C1_Init(void)
 {
 
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x2000090E;
+  hi2c1.Init.Timing = 0x0000020B;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -144,17 +144,18 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef* i2cHandle)
 		buffer[0]=reg_addr;
 		
 		for(int i=1; i<=length; i++){
-				buffer[i]=data[i];
+				buffer[i]=data[i-1];
 		}
 		
-		HAL_I2C_Master_Transmit(&hi2c1, slave_addr, (uint8_t *)buffer, length+1, 1000);
+		while(HAL_I2C_Master_Transmit(&hi2c1, (slave_addr<<1), (uint8_t *)buffer, length+1, 1000)!= HAL_OK);
 		
 		return 0;
 	}
 	
   int i2c_read(unsigned char slave_addr, unsigned char reg_addr,unsigned char length, unsigned char *data){
-		HAL_I2C_Master_Transmit(&hi2c1, slave_addr, (uint8_t *)&reg_addr, 1, 1000);
-		HAL_I2C_Master_Receive(&hi2c1, slave_addr, data, length, 1000);
+		uint8_t reg=reg_addr;
+		while(HAL_I2C_Master_Transmit(&hi2c1, (slave_addr<<1), (uint8_t *)&reg, 1, 1000)!= HAL_OK);
+		while(HAL_I2C_Master_Receive(&hi2c1, (slave_addr<<1), (uint8_t *)data, length, 1000)!= HAL_OK);
 		
 		return 0;
 	}
