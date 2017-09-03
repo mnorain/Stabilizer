@@ -41,7 +41,49 @@
 #include "tim.h"
 
 /* USER CODE BEGIN 0 */
+#define FILTER_SIZE (30)
 
+typedef struct filter{
+	int buff[FILTER_SIZE];
+	int latest;
+	int sum;
+	int wrapped;
+}filter_t;
+
+filter_t channel1Filter;
+filter_t channel2Filter;
+filter_t channel3Filter;
+
+int addElement(filter_t *fil, int newElem){
+	if(fil==NULL){
+		return -1;
+	}
+	fil->sum-=fil->buff[fil->latest];
+	fil->buff[fil->latest]=newElem;
+	fil->latest++;
+	if(fil->latest>=FILTER_SIZE){
+		fil->latest=0;
+		fil->wrapped=1;
+	}
+	fil->sum+=newElem;
+	return 0;
+}
+
+int initFilters(void){
+	memset(&channel1Filter, 0, sizeof(filter_t));
+	memset(&channel2Filter, 0, sizeof(filter_t));
+	memset(&channel3Filter, 0, sizeof(filter_t));
+}
+
+int getAverage(filter_t* fil){
+	if(fil->wrapped){
+		return (int)((float)fil->sum/(float)FILTER_SIZE);
+	} else if(fil->latest>0){
+		return (int)((float)fil->sum/(float)fil->latest);
+	}else{
+		return 0;
+	}
+}
 /* USER CODE END 0 */
 
 TIM_HandleTypeDef htim3;
@@ -54,7 +96,7 @@ void MX_TIM3_Init(void)
   TIM_OC_InitTypeDef sConfigOC;
 
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 20;
+  htim3.Init.Prescaler = 19;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim3.Init.Period = 40000;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -176,15 +218,18 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 
 
 void updateChannel1(int pulse){
-	htim3.Instance->CCR1=pulse;
+	addElement(&channel1Filter, pulse);
+	htim3.Instance->CCR1= getAverage(&channel1Filter);
 }
 
 void updateChannel2(int pulse){
-	htim3.Instance->CCR2=pulse;
+	addElement(&channel2Filter, pulse);
+	htim3.Instance->CCR2= getAverage(&channel2Filter);
 }
 
 void updateChannel3(int pulse){
-	htim3.Instance->CCR3=pulse;
+	addElement(&channel3Filter, pulse);
+	htim3.Instance->CCR3= getAverage(&channel3Filter);
 }
 /* USER CODE END 1 */
 

@@ -68,6 +68,8 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 void updateChannel1(int pulse);
 void updateChannel2(int pulse);
 void updateChannel3(int pulse);
+int initFilters(void);
+	
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

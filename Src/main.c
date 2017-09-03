@@ -514,6 +514,7 @@ volatile static float q1, q2, q3, q4;
 volatile static float eul1, eul2, eul3;
 volatile static float yaw, pitch, roll;
 volatile static float Fyaw, Fpitch, Froll;
+volatile static float Nyaw, Npitch, Nroll;
 
 volatile static float debug1;
 
@@ -552,7 +553,7 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
 		//__disable_irq();
-		
+		int initFilters();
 		HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 		HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
 		HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
@@ -767,9 +768,14 @@ int main(void)
 						Fpitch= pitch*180/PI;
 						Froll= roll*180/PI;
 							
-						updateChannel1(2850-(Fyaw*25));	
-						updateChannel2(2850-(Froll*25));
-						updateChannel3(2850-(Fpitch*25));
+							
+						Nyaw=2850.0f-(Fyaw*25.0f);
+						Npitch= 2800.0f-(Fpitch*25.0f);
+						Nroll=2550.0f+(Froll*25.0f);
+							
+						updateChannel1((int)Nyaw);	
+						updateChannel2((int)Npitch);
+						updateChannel3((int)Nroll);
 
 			
 						
